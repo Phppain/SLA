@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyo
+*.pyd
+*.log
+
+# Virtualenv
+env/
+venv/
+ENV/
+*.env
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+*.sqlite3
+
+# VSCode/PyCharm
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Pipenv / Poetry / Pip
+Pipfile.lock
+poetry.lock
+
+# Migrations (по желанию)
+*/migrations/__pycache__/
+*/migrations/*.pyc
+# (если хочешь — можешь вообще игнорить миграции целиком)
+# */migrations/
