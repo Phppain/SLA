@@ -9,7 +9,14 @@ from rest_framework_simplejwt.views import (
 )
 
 router = DefaultRouter()
-router.register(r'Users', UserViewSet)
+router.register(r'users', UserViewSet)
+router.register(r'profiles', ProfileViewSet)
+router.register(r'posts', PostViewSet)
+router.register(r'comments', CommentViewSet)
+router.register(r'likes', LikeViewSet)
+router.register(r'follows', FollowViewSet)
+router.register(r'tags', TagViewSet)
+router.register(r'posttags', PostTagViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,4 +27,5 @@ urlpatterns = [
     path('api/logout/', LogoutView.as_view(), name='logout'),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/activate/<uidb64>/<token>/', ActivateAccountView.as_view(), name='activate'),
+    path('search/posts/', PostSearchView.as_view()),
 ]
