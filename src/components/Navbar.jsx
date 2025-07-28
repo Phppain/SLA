@@ -1,83 +1,108 @@
-
-import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  FiSearch,
+  FiUser,
+  FiPlus,
+  FiUsers,
+  FiLogOut,
+  FiLogIn,
+  FiUserPlus,
+  FiMessageCircle,
+} from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
+import { setQuery } from "../features/search/searchSlice";
 import { logout } from "../features/auth/authSlice";
-import { Link, useNavigate } from "react-router-dom";
-import LoginModal from "./LoginModal";
-import RegisterModal from "./RegisterModal";
 
-export default function Navbar() {
-  const user = useSelector((state) => state.auth.user);
+const Navbar = () => {
+  const location = useLocation();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
+  const query = useSelector((state) => state.search.query);
+  const user = useSelector((state) => state.auth.user);
+
+  const isSearchUsersPage = location.pathname === "/search-users";
+
+  const handleChange = (e) => {
+    dispatch(setQuery(e.target.value));
+  };
 
   const handleLogout = () => {
     dispatch(logout());
+    localStorage.removeItem("user");
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    navigate(`/?q=${search}`);
+  const handleLogin = () => {
+    window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { mode: "login" } }));
+  };
+
+  const handleRegister = () => {
+    window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { mode: "register" } }));
   };
 
   return (
-    <>
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
-      {showRegister && <RegisterModal onClose={() => setShowRegister(false)} />}
+    <header className="sticky top-0 z-50 bg-white shadow-md px-4 py-2 flex items-center justify-between">
+      <Link to="/" className="text-2xl font-bold text-pink-600">
+        SLA
+      </Link>
 
-      <nav className="bg-white shadow p-4 flex flex-wrap justify-between items-center gap-2">
-        <Link to="/" className="text-xl font-bold text-red-500">Pinterest</Link>
+      <div className="flex-1 mx-4">
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder={isSearchUsersPage ? "Поиск друзей..." : "Поиск пинов..."}
+          className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
 
-        <form onSubmit={handleSearch} className="flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Поиск пинов..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-          />
-        </form>
+      <nav className="flex items-center space-x-4">
+        <Link to="/pins" className="text-gray-600 hover:text-pink-600 transition" title="Все пины">
+          <FiSearch size={22} />
+        </Link>
+        <Link to="/create" className="text-gray-600 hover:text-pink-600 transition" title="Создать пин">
+          <FiPlus size={22} />
+        </Link>
+        <Link to="/search-users" className="text-gray-600 hover:text-pink-600 transition" title="Найти друзей">
+          <FiUsers size={22} />
+        </Link>
+        <Link to="/chat" className="text-gray-600 hover:text-pink-600 transition" title="Чат">
+          <FiMessageCircle size={22} />
+        </Link>
 
-        <div className="flex items-center space-x-3">
-          {user ? (
-            <>
-              <Link
-                to="/create"
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Создать пин
-              </Link>
-              <Link to="/chat" className="hover:underline">Чат</Link>
-              <Link to="/profile" className="hover:underline">Профиль</Link>
-              <Link to="/search-users" className="hover:underline">Найти друзей</Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-gray-600 hover:underline"
-              >
-                Выйти
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setShowLogin(true)}
-                className="text-sm bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
-              >
-                Войти
-              </button>
-              <button
-                onClick={() => setShowRegister(true)}
-                className="text-sm bg-gray-200 text-gray-800 px-4 py-1 rounded hover:bg-gray-300"
-              >
-                Зарегистрироваться
-              </button>
-            </>
-          )}
-        </div>
+        {user ? (
+          <>
+            <Link to="/profile" className="text-gray-600 hover:text-pink-600 transition" title="Профиль">
+              <FiUser size={22} />
+            </Link>
+            <button
+              onClick={handleLogout}
+              title="Выйти"
+              className="text-gray-600 hover:text-red-600 transition"
+            >
+              <FiLogOut size={22} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleLogin}
+              title="Войти"
+              className="text-gray-600 hover:text-green-600 transition"
+            >
+              <FiLogIn size={22} />
+            </button>
+            <button
+              onClick={handleRegister}
+              title="Зарегистрироваться"
+              className="text-gray-600 hover:text-blue-600 transition"
+            >
+              <FiUserPlus size={22} />
+            </button>
+          </>
+        )}
       </nav>
-    </>
+    </header>
   );
-}
+};
+
+export default Navbar;

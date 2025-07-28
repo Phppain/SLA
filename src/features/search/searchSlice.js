@@ -1,4 +1,4 @@
-
+// src/features/search/searchSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const searchSlice = createSlice({
@@ -14,4 +14,5 @@ const searchSlice = createSlice({
 });
 
 export const { setQuery } = searchSlice.actions;
+
 export default searchSlice.reducer;

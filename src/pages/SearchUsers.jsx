@@ -1,51 +1,36 @@
-
-import { useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addFriend } from "../features/friends/friendsSlice";
+import { fetchUsers } from "../features/users/userSlice";
+import { setQuery } from "../features/search/searchSlice";
+import UserCard from "../components/UserCard";
 
-const mockUsers = ["demo", "admin", "newuser", "jane", "jack", "maria"];
-
-export default function SearchUsers() {
-  const [query, setQuery] = useState("");
+const SearchUsers = () => {
   const dispatch = useDispatch();
-  const friends = useSelector((state) => state.friends.list);
-  const currentUser = useSelector((state) => state.auth.user);
+  const users = useSelector((state) => state.users.users);
+  const query = useSelector((state) => state.search.query);
 
-  const filtered = mockUsers.filter(
-    (user) =>
-      user !== currentUser?.username &&
-      user.toLowerCase().includes(query.toLowerCase()) &&
-      !friends.includes(user)
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(query.toLowerCase())
   );
-
-  const handleAdd = (username) => {
-    dispatch(addFriend(username));
-  };
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Найти друзей</h2>
-      <input
-        type="text"
-        placeholder="Поиск по имени"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="border px-4 py-2 rounded w-full mb-4"
-      />
-      <ul className="space-y-2">
-        {filtered.map((user) => (
-          <li key={user} className="flex justify-between items-center border px-4 py-2 rounded">
-            <span>{user}</span>
-            <button
-              onClick={() => handleAdd(user)}
-              className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-            >
-              Добавить
-            </button>
-          </li>
-        ))}
-        {filtered.length === 0 && <p className="text-sm text-gray-500">Никого не найдено</p>}
-      </ul>
+    <div className="p-4 max-w-screen-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Найти друзей</h1>
+      {filteredUsers.length === 0 ? (
+        <p>Нет пользователей по вашему запросу.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredUsers.map((user) => (
+            <UserCard key={user.id} user={user} />
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default SearchUsers;

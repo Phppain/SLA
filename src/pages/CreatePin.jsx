@@ -1,71 +1,93 @@
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addPin } from "../features/pins/pinSlice";
+
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { addPin } from "../features/pins/pinSlice";
+import { v4 as uuidv4 } from "uuid";
 
-const categories = [
-  "art",
-  "beauty",
-  "fitness",
-  "fashion",
-  "travel",
-  "food",
-  "gaming",
-  "cars",
-];
+const CreatePin = () => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [imageURL, setImageURL] = useState("");
+  const [category, setCategory] = useState("Искусство");
 
-export default function CreatePin() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const username = useSelector((state) => state.auth.user?.username || "anon");
-
-  const [title, setTitle] = useState("");
-  const [image, setImage] = useState("");
-  const [category, setCategory] = useState(categories[0]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title || !image || !category) return;
-    dispatch(addPin(title, image, username, category));
-    navigate("/");
+    if (!title || !imageURL) return;
+
+    const newPin = {
+      id: uuidv4(),
+      title,
+      description,
+      image: imageURL,
+      category,
+      likes: 0,
+      comments: [],
+    };
+
+    dispatch(addPin(newPin));
+    navigate("/pins");
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-4">Создать новый пин</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Название"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border rounded px-4 py-2"
+    <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md mt-8 grid md:grid-cols-2 gap-6">
+      {/* Превью */}
+      <div>
+        <img
+          src={imageURL || "https://via.placeholder.com/400x300?text=Превью"}
+          alt="Превью"
+          className="rounded-lg w-full object-cover h-64 border"
         />
         <input
           type="text"
           placeholder="Ссылка на изображение"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          className="w-full border rounded px-4 py-2"
+          value={imageURL}
+          onChange={(e) => setImageURL(e.target.value)}
+          className="mt-4 w-full p-2 border rounded"
+        />
+      </div>
+
+      {/* Форма */}
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <input
+          type="text"
+          placeholder="Название пина"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="p-2 border rounded"
+        />
+        <textarea
+          placeholder="Описание"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="p-2 border rounded"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full border rounded px-4 py-2"
+          className="p-2 border rounded"
         >
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          <option>Искусство</option>
+          <option>Красота</option>
+          <option>Фитнес</option>
+          <option>Мода</option>
+          <option>Путешествия</option>
+          <option>Еда</option>
+          <option>Игры</option>
+          <option>Автомобили</option>
         </select>
         <button
           type="submit"
-          className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600"
+          className="bg-pink-600 text-white py-2 px-4 rounded hover:bg-pink-700 transition"
         >
-          Создать
+          Создать пин
         </button>
       </form>
     </div>
   );
-}
+};
+
+export default CreatePin;
