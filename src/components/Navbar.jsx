@@ -29,6 +29,7 @@ const Navbar = () => {
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("user");
+    localStorage.removeItem("policyAccepted");
   };
 
   const handleLogin = () => {
@@ -59,15 +60,20 @@ const Navbar = () => {
         <Link to="/pins" className="text-gray-600 hover:text-pink-600 transition" title="Все пины">
           <FiSearch size={22} />
         </Link>
-        <Link to="/create" className="text-gray-600 hover:text-pink-600 transition" title="Создать пин">
-          <FiPlus size={22} />
-        </Link>
-        <Link to="/search-users" className="text-gray-600 hover:text-pink-600 transition" title="Найти друзей">
-          <FiUsers size={22} />
-        </Link>
-        <Link to="/chat" className="text-gray-600 hover:text-pink-600 transition" title="Чат">
-          <FiMessageCircle size={22} />
-        </Link>
+
+        {user && (
+          <>
+            <Link to="/create" className="text-gray-600 hover:text-pink-600 transition" title="Создать пин">
+              <FiPlus size={22} />
+            </Link>
+            <Link to="/search-users" className="text-gray-600 hover:text-pink-600 transition" title="Найти друзей">
+              <FiUsers size={22} />
+            </Link>
+            <Link to="/chat" className="text-gray-600 hover:text-pink-600 transition" title="Чат">
+              <FiMessageCircle size={22} />
+            </Link>
+          </>
+        )}
 
         {user ? (
           <>

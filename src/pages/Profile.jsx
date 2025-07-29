@@ -1,19 +1,37 @@
-
 import { useSelector, useDispatch } from "react-redux";
 import { removeFriend } from "../features/friends/friendsSlice";
-import { Link } from "react-router-dom";
-import { FiTrash, FiUser } from "react-icons/fi";
+import { deleteAccount } from "../features/auth/authSlice";
+import { Link, useNavigate } from "react-router-dom";
+import { FiTrash, FiUser, FiUserX } from "react-icons/fi";
+import { useState } from "react";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 export default function Profile() {
   const user = useSelector((state) => state.auth.user);
   const pins = useSelector((state) => state.pins.pins);
   const friends = useSelector((state) => state.friends.list);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const userPins = pins.filter((pin) => pin.username === user?.username);
 
   const handleRemove = (friend) => {
     dispatch(removeFriend(friend));
+  };
+
+  const handleDeleteAccount = () => {
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    dispatch(deleteAccount());
+    navigate("/");
+  };
+
+  const cancelDelete = () => {
+    setShowConfirm(false);
   };
 
   return (
@@ -54,7 +72,7 @@ export default function Profile() {
         )}
       </div>
 
-      <div>
+      <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Мои пины</h2>
         {userPins.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -73,6 +91,22 @@ export default function Profile() {
           <p className="text-sm text-gray-500">У вас пока нет пинов.</p>
         )}
       </div>
+
+      {/* 🔐 Удаление аккаунта — аккуратно оформлено */}
+      <div className="mt-16 border-t pt-8 text-center">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Настройки</h3>
+        <button
+          onClick={handleDeleteAccount}
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-pink-100 text-pink-700 border border-pink-300 hover:bg-pink-200 transition"
+        >
+          <FiUserX className="text-lg" />
+          Удалить аккаунт
+        </button>
+      </div>
+
+      {showConfirm && (
+        <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={cancelDelete} />
+      )}
     </div>
   );
 }
