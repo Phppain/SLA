@@ -1,0 +1,28 @@
+# Django и REST framework
+Django>=4.2,<5.0
+djangorestframework>=3.14
+djangorestframework-simplejwt>=5.3.1
+
+# Поиск
+django-haystack>=3.2
+elasticsearch>=7.17,<8.0
+
+# Email и токены
+django-crispy-forms>=2.0
+# если используешь для сброса пароля по email
+
+# Утилиты
+python-dotenv>=1.0.0
+Pillow>=10.0.0  # если работаешь с изображениями
+django-filter>=23.2
+
+# Для работы с CORS (если фронтенд отдельно)
+django-cors-headers>=4.0
+
+# PostgreSQL, если используешь
+psycopg2-binary>=2.9
+
+# Если локально используешь SQLite, можно не указывать psycopg2
+
+# Для работы с токенами подтверждения
+itsdangerous>=2.1.2
