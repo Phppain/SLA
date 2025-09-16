@@ -33,7 +33,7 @@ const slides = [
 
 export default function HeroCarousel() {
   return (
-    <div className="w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-xl shadow-xl mb-8">
+    <div className="w-full max-w-[calc(100vw-16rem)] mx-auto h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] overflow-hidden rounded-xl shadow-xl mb-8">
       <Swiper
         modules={[Autoplay]}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
@@ -47,7 +47,7 @@ export default function HeroCarousel() {
               style={{ backgroundImage: `url(${slide.image})` }}
             >
               <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
-              <h2 className="z-10 text-white text-3xl md:text-4xl lg:text-5xl font-bold text-center px-4 drop-shadow-lg">
+              <h2 className="z-10 text-white text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold text-center px-4 drop-shadow-lg">
                 {slide.text}
               </h2>
             </div>

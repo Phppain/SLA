@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   toggleLike,
   deletePin,
-  addComment,
-  editComment,
-  deleteComment,
 } from "../features/pins/pinSlice";
+import { addComment, fetchComments } from "../features/interactions/likeCommentSlice";
 import {
   FiHeart,
   FiMessageCircle,
@@ -14,21 +13,23 @@ import {
   FiTrash,
   FiX,
   FiSend,
+  FiBookmark,
+  FiShare2,
 } from "react-icons/fi";
 
 const PinModal = ({ pinId, onClose }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const pin = useSelector((state) =>
     state.pins.pins.find((p) => p.id === pinId)
   );
   const currentUser = useSelector((state) => state.auth.user);
+  const { comments, loading } = useSelector((state) => state.interactions);
 
   const [commentText, setCommentText] = useState("");
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingText, setEditingText] = useState("");
   const [isVisible, setIsVisible] = useState(false);
 
-  // Показываем модалку + добавляем закрытие по Escape
+  // Показываем модалку + добавляем закрытие по Escape + загружаем комментарии
   useEffect(() => {
     const showTimeout = setTimeout(() => setIsVisible(true), 10);
 
@@ -37,11 +38,16 @@ const PinModal = ({ pinId, onClose }) => {
     };
     document.addEventListener("keydown", handleEsc);
 
+    // Загружаем комментарии при открытии модалки
+    if (pinId) {
+      dispatch(fetchComments(pinId));
+    }
+
     return () => {
       clearTimeout(showTimeout);
       document.removeEventListener("keydown", handleEsc);
     };
-  }, []);
+  }, [pinId, dispatch]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -50,55 +56,57 @@ const PinModal = ({ pinId, onClose }) => {
 
   if (!pin || !currentUser) return null;
 
-  const hasLiked = Array.isArray(pin.likes) && pin.likes.includes(currentUser.id);
-
-  const handleToggleLike = () =>
-    dispatch(toggleLike({ pinId: pin.id, userId: currentUser.id }));
+  const handleToggleLike = (e) => {
+    e.stopPropagation();
+    dispatch(toggleLike(pin.id));
+  };
 
   const handleDelete = () => {
-    dispatch(deletePin(pin.id));
+    if (window.confirm("Вы уверены, что хотите удалить этот пин?")) {
+      dispatch(deletePin(pin.id));
+      handleClose();
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/edit/${pin.id}`);
     handleClose();
   };
 
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (commentText.trim()) {
-      dispatch(
-        addComment({
-          id: pin.id,
-          comment: {
-            text: commentText,
-            userId: currentUser.id,
-            userName: currentUser.name || currentUser.username,
-          },
-        })
-      );
-      setCommentText("");
+      try {
+        await dispatch(addComment({ pinId: pin.id, content: commentText })).unwrap();
+        setCommentText("");
+      } catch (error) {
+        console.error("Ошибка при добавлении комментария:", error);
+      }
     }
   };
 
-  const handleEditComment = (commentId, text) => {
-    setEditingCommentId(commentId);
-    setEditingText(text);
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    if (editingText.trim()) {
-      dispatch(
-        editComment({
-          pinId: pin.id,
-          commentId: editingCommentId,
-          newText: editingText,
-        })
-      );
-      setEditingCommentId(null);
-      setEditingText("");
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: pin.title,
+        text: pin.description,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Ссылка скопирована в буфер обмена!");
     }
   };
 
-  const handleDeleteComment = (commentId) => {
-    dispatch(deleteComment({ pinId: pin.id, commentId }));
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -110,12 +118,12 @@ const PinModal = ({ pinId, onClose }) => {
       >
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+          className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-2"
         >
-          <FiX size={24} />
+          <FiX size={20} />
         </button>
 
-        <div className="md:w-1/2 w-full">
+        <div className="md:w-1/2 w-full relative">
           <img
             src={pin.image}
             alt={pin.title}
@@ -123,96 +131,138 @@ const PinModal = ({ pinId, onClose }) => {
           />
         </div>
 
-        <div className="p-6 md:w-1/2 w-full flex flex-col justify-between">
+        <div className="p-6 md:w-1/2 w-full flex flex-col justify-between max-h-screen overflow-y-auto">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">{pin.title}</h2>
-            <p className="text-gray-600 mb-4">{pin.description}</p>
+            {/* Заголовок и описание */}
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold mb-2">{pin.title}</h2>
+              <p className="text-gray-600 mb-2">{pin.description}</p>
+              {pin.category && (
+                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                  {pin.category}
+                </span>
+              )}
+            </div>
 
-            <div className="flex items-center gap-4 mb-4">
+            {/* Автор */}
+            {pin.author && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-pink-600">
+                    {pin.author.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{pin.author.username}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatTime(pin.created_at)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Действия */}
+            <div className="flex items-center gap-4 mb-6">
               <button
                 onClick={handleToggleLike}
-                className={`flex items-center gap-1 ${
-                  hasLiked ? "text-pink-600" : "text-gray-500"
-                } hover:text-pink-800 transition`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  pin.is_liked 
+                    ? "text-red-600 bg-red-50" 
+                    : "text-gray-600 hover:text-red-600"
+                }`}
               >
-                <FiHeart /> {pin.likes.length}
+                <FiHeart className={pin.is_liked ? "fill-current" : ""} />
+                <span>{pin.likes_count || 0}</span>
               </button>
-              <div className="flex items-center gap-1 text-blue-600">
-                <FiMessageCircle /> {pin.comments?.length || 0}
+              
+              <div className="flex items-center gap-2 text-gray-600">
+                <FiMessageCircle />
+                <span>{pin.comments_count || 0}</span>
               </div>
-              <button
-                onClick={handleDelete}
-                className="text-red-600 hover:text-red-800"
-                title="Удалить пин"
-              >
-                <FiTrash />
-              </button>
-            </div>
 
-            <div className="max-h-40 overflow-y-auto mb-2 space-y-2 pr-1">
-              {pin.comments?.map((c) => (
-                <div
-                  key={c.id}
-                  className="text-sm text-gray-700 border-b py-1 flex justify-between items-start"
-                >
-                  {editingCommentId === c.id ? (
-                    <form
-                      onSubmit={handleEditSubmit}
-                      className="w-full flex items-center gap-2"
-                    >
-                      <input
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        className="flex-1 px-2 py-1 border rounded text-sm"
-                      />
-                      <button
-                        type="submit"
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <FiSend />
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-pink-600">{c.userName}</span>
-                      <span>{c.text}</span>
-                    </div>
-                  )}
-                  {c.userId === currentUser.id && editingCommentId !== c.id && (
-                    <div className="flex gap-2 pl-2">
-                      <button
-                        onClick={() => handleEditComment(c.id, c.text)}
-                        className="text-yellow-600"
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteComment(c.id)}
-                        className="text-red-600"
-                      >
-                        <FiTrash />
-                      </button>
-                    </div>
-                  )}
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 rounded-lg transition-colors"
+              >
+                <FiShare2 />
+                <span>Поделиться</span>
+              </button>
+
+              {currentUser.id === pin.author?.id && (
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    onClick={handleEdit}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 rounded-lg transition-colors"
+                  >
+                    <FiEdit />
+                    <span>Редактировать</span>
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 rounded-lg transition-colors"
+                  >
+                    <FiTrash />
+                    <span>Удалить</span>
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
 
-            <form onSubmit={handleCommentSubmit} className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Оставить комментарий..."
-                className="flex-1 px-3 py-2 border rounded-full text-sm"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 text-sm"
-              >
-                Отправить
-              </button>
-            </form>
+            {/* Комментарии */}
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Комментарии</h3>
+              
+              <div className="max-h-60 overflow-y-auto mb-4 space-y-3">
+                {loading ? (
+                  <p className="text-gray-500 text-center py-4">Загрузка комментариев...</p>
+                ) : comments?.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3">
+                      <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-medium text-pink-600">
+                          {comment.author?.username?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="font-medium text-sm text-gray-900">
+                            {comment.author?.username}
+                          </p>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {comment.content}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatTime(comment.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Пока нет комментариев. Будьте первым!
+                  </p>
+                )}
+              </div>
+
+              {/* Форма комментария */}
+              <form onSubmit={handleCommentSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Оставить комментарий..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  disabled={!commentText.trim()}
+                  className="px-4 py-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
+                >
+                  <FiSend size={16} />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

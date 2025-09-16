@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../features/auth/authSlice";
+import { loginUser, clearError } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const LoginModal = () => {
   const [show, setShow] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const error = useSelector((state) => state.auth.error);
   const dispatch = useDispatch();
@@ -21,16 +21,23 @@ const LoginModal = () => {
     return () => window.removeEventListener("openAuthModal", handleOpen);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) return;
-    dispatch(login({ email, password }));
+    if (!username.trim() || !password.trim()) return;
+
+    try {
+      await dispatch(loginUser({ username, password })).unwrap();
+      closeModal();
+    } catch (err) {
+      // Ошибка уже обработана в Redux
+    }
   };
 
   const closeModal = () => {
     setShow(false);
-    setEmail("");
+    setUsername("");
     setPassword("");
+    dispatch(clearError());
   };
 
   const handleForgotPassword = () => {
@@ -40,7 +47,9 @@ const LoginModal = () => {
 
   const switchToRegister = () => {
     closeModal();
-    window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { mode: "register" } }));
+    window.dispatchEvent(
+      new CustomEvent("openAuthModal", { detail: { mode: "register" } })
+    );
   };
 
   if (!show) return null;
@@ -54,14 +63,16 @@ const LoginModal = () => {
         className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-md relative animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-bold mb-6 text-center text-pink-600">Добро пожаловать</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center text-pink-600">
+          Добро пожаловать
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="email"
-            placeholder="Email"
+            type="text"
+            placeholder="Имя пользователя"
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
           <input
             type="password"
@@ -70,7 +81,9 @@ const LoginModal = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
           <button
             type="submit"
             className="w-full bg-pink-600 text-white py-2 rounded-lg hover:bg-pink-700 transition"

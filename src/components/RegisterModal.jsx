@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "../features/auth/authSlice";
+import { registerUser, clearError } from "../features/auth/authSlice";
 
 const RegisterModal = () => {
   const [show, setShow] = useState(false);
@@ -20,10 +20,16 @@ const RegisterModal = () => {
     return () => window.removeEventListener("openAuthModal", handleOpen);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !email || !password) return;
-    dispatch(register({ username, email, password }));
+    try {
+      await dispatch(registerUser({ username, email, password })).unwrap();
+      alert("Проверьте почту для активации аккаунта");
+      handleClose();
+    } catch (err) {
+      // Ошибка уже будет в состоянии error
+    }
   };
 
   const handleClose = () => {
@@ -31,11 +37,14 @@ const RegisterModal = () => {
     setUsername("");
     setEmail("");
     setPassword("");
+    dispatch(clearError());
   };
 
   const switchToLogin = () => {
     handleClose();
-    window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { mode: "login" } }));
+    window.dispatchEvent(
+      new CustomEvent("openAuthModal", { detail: { mode: "login" } })
+    );
   };
 
   if (!show) return null;
@@ -49,7 +58,9 @@ const RegisterModal = () => {
         className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md relative animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-bold text-center text-pink-600 mb-6">Регистрация</h2>
+        <h2 className="text-3xl font-bold text-center text-pink-600 mb-6">
+          Регистрация
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -73,7 +84,9 @@ const RegisterModal = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
           <button
             type="submit"
             className="w-full bg-pink-600 text-white py-2 rounded hover:bg-pink-700 transition"

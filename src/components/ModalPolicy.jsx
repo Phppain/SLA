@@ -1,30 +1,65 @@
+// src/components/ModalPolicy.jsx
+import React from "react";
 import { useDispatch } from "react-redux";
-import { acceptPolicy } from "../features/auth/authSlice";
+import { acceptPolicyAPI } from "../features/auth/authSlice";
 
-export default function ModalPolicy() {
+const ModalPolicy = () => {
   const dispatch = useDispatch();
 
   const handleAccept = () => {
-    dispatch(acceptPolicy());
+    dispatch(acceptPolicyAPI());
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 z-[1000] flex items-center justify-center">
-      <div className="bg-white p-6 rounded-xl shadow-2xl max-w-md w-[90%]">
-        <h2 className="text-2xl font-semibold mb-4 text-center text-pink-600">Политика конфиденциальности</h2>
-        <p className="text-sm text-gray-700 mb-6 text-justify leading-relaxed">
-          Мы используем данные только для улучшения качества сервиса. Нажимая «Принять», вы соглашаетесь
-          с нашей политикой конфиденциальности. Без согласия доступ к функционалу сайта ограничен.
-        </p>
-        <div className="flex justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900">Политика конфиденциальности</h2>
+        <div className="text-sm text-gray-600 mb-6 space-y-3 max-h-60 overflow-y-auto">
+          <p>
+            Добро пожаловать в SLA! Мы ценим вашу конфиденциальность и стремимся защищать ваши личные данные.
+          </p>
+          <p>
+            <strong>Какие данные мы собираем:</strong>
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Информация профиля (имя пользователя, email, аватар)</li>
+            <li>Контент, который вы создаете (пины, комментарии)</li>
+            <li>Данные об использовании сервиса</li>
+            <li>Техническая информация (IP-адрес, тип браузера)</li>
+          </ul>
+          <p>
+            <strong>Как мы используем ваши данные:</strong>
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Для предоставления и улучшения наших услуг</li>
+            <li>Для персонализации контента</li>
+            <li>Для обеспечения безопасности аккаунта</li>
+            <li>Для связи с вами по важным вопросам</li>
+          </ul>
+          <p>
+            <strong>Ваши права:</strong>
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Просматривать и редактировать свои данные</li>
+            <li>Удалить аккаунт в любое время</li>
+            <li>Отписаться от уведомлений</li>
+            <li>Обратиться к нам с вопросами о конфиденциальности</li>
+          </ul>
+          <p>
+            Продолжая использовать SLA, вы соглашаетесь с нашей политикой конфиденциальности и условиями использования.
+          </p>
+        </div>
+        <div className="flex justify-end">
           <button
-            className="bg-pink-500 hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-full transition"
             onClick={handleAccept}
+            className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
           >
-            Принять
+            Принять и продолжить
           </button>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ModalPolicy;

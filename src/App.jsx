@@ -1,20 +1,25 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import HomePage from "./pages/Home";
 import CreatePin from "./pages/CreatePin";
+import EditPin from "./pages/EditPin";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import ChatPage from "./pages/Chat";
 import SearchUsers from "./pages/SearchUsers";
 import UserProfile from "./pages/UserProfile";
 import CategoryPage from "./pages/CategoryPage";
 import PinsPage from "./pages/PinsPage";
+import SavedPins from "./pages/SavedPins";
+import FollowersFollowing from "./pages/FollowersFollowing";
+import Notifications from "./pages/Notifications";
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
 import PinModal from "./components/PinModal";
 import ModalPolicy from "./components/ModalPolicy";
 import PrivateRoute from "./components/PrivateRoute";
 import ResetPassword from "./pages/ResetPassword";
-
 
 import { useSelector, useDispatch } from "react-redux";
 import { closePinModal } from "./features/modal/modalSlice";
@@ -26,38 +31,43 @@ export default function App() {
   const user = useSelector((state) => state.auth.user);
   const policyAccepted = useSelector((state) => state.auth.policyAccepted);
 
-  const shouldBlock = user && !policyAccepted;
-
   return (
     <>
-      {!shouldBlock && (
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="/pins" element={<PinsPage />} />
-            <Route path="/search-users" element={<SearchUsers />} />
-            <Route path="/user/:username" element={<UserProfile />} />
-            <Route path="/category/:name" element={<CategoryPage />} />
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="/pins" element={<PinsPage />} />
+          <Route path="/search-users" element={<SearchUsers />} />
+          <Route path="/user/:username" element={<UserProfile />} />
+          <Route path="/category/:name" element={<CategoryPage />} />
 
-            {/* 🔒 Приватные маршруты */}
-            <Route element={<PrivateRoute />}>
-              <Route path="/create" element={<CreatePin />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/chat" element={<ChatPage />} />
-            </Route>
-
-            {/* 🔁 Редиректы */}
-            <Route path="/login" element={<Navigate to="/" />} />
-            <Route path="/register" element={<Navigate to="/" />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+          {/* 🔒 Приватные маршруты */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/create" element={<CreatePin />} />
+            <Route path="/edit/:pinId" element={<EditPin />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/saved" element={<SavedPins />} />
+            <Route path="/followers" element={<FollowersFollowing />} />
           </Route>
-        </Routes>
-      )}
 
-      {/* Глобальные модалки */}
+          {/* 🔁 Редиректы */}
+          <Route path="/login" element={<Navigate to="/" />} />
+          <Route path="/register" element={<Navigate to="/" />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+      </Routes>
+
+      {/* 🔘 Глобальные модалки */}
       <LoginModal />
       <RegisterModal />
+
+      {/* 🔐 Политика конфиденциальности – показывать только если вошёл и не принял */}
       {user && !policyAccepted && <ModalPolicy />}
+
+      {/* 📌 Модалка пина */}
       {selectedPinId && (
         <PinModal pinId={selectedPinId} onClose={() => dispatch(closePinModal())} />
       )}

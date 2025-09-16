@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 
 const HeroSection = () => {
   return (
-    <section className="py-12 px-6 bg-white dark:bg-gray-900">
+    <section className="py-10 px-4 sm:px-6 md:px-10 lg:px-16 bg-white dark:bg-gray-900 max-w-[calc(100vw-16rem)] mx-auto mb-10">
       <motion.h1
-        className="text-4xl font-bold mb-6 text-center text-gray-900 dark:text-white"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-center text-gray-900 dark:text-white leading-snug"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -14,7 +14,7 @@ const HeroSection = () => {
       </motion.h1>
 
       <motion.p
-        className="text-center text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto"
+        className="text-center text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -24,7 +24,7 @@ const HeroSection = () => {
       </motion.p>
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto px-2"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.3 }}
@@ -53,10 +53,10 @@ const HeroSection = () => {
             <img
               src={item.img}
               alt={item.title}
-              className="w-full h-60 object-cover transform group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-48 sm:h-56 md:h-60 lg:h-64 xl:h-72 object-cover transform group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-50 transition duration-300" />
-            <h3 className="absolute bottom-4 left-4 text-white text-xl font-semibold z-10">
+            <h3 className="absolute bottom-4 left-4 text-white text-lg sm:text-xl font-semibold z-10">
               {item.title}
             </h3>
           </motion.div>

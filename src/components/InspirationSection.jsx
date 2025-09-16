@@ -9,11 +9,11 @@ const inspirations = [
   },
   {
     title: "Простая сервировка",
-    image: "https://images.pexels.com/photos/33097116/pexels-photo-33097116.jpeg?_gl=1*qebh23*_ga*MjE0MDY0OTQwOC4xNzUzNDQ2NDQ3*_ga_8JE65Q40S6*czE3NTM1MDk4NDUkbzIkZzEkdDE3NTM1MTA1NzUkajQ2JGwwJGgw",
+    image: "https://images.pexels.com/photos/33097116/pexels-photo-33097116.jpeg?_gl=1*qebh23*_ga*...",
   },
   {
     title: "Идеи для гардероба",
-    image: "https://images.pexels.com/photos/4641825/pexels-photo-4641825.jpeg?_gl=1*k4g6tr*_ga*MjE0MDY0OTQwOC4xNzUzNDQ2NDQ3*_ga_8JE65Q40S6*czE3NTM1MDk4NDUkbzIkZzEkdDE3NTM1MTA2OTMkajU5JGwwJGgw",
+    image: "https://images.pexels.com/photos/4641825/pexels-photo-4641825.jpeg?_gl=1*k4g6tr*_ga*...",
   },
 ];
 
@@ -23,9 +23,12 @@ const InspirationSection = () => {
   }, []);
 
   return (
-    <section className="px-4 py-12 bg-white">
-      <h2 className="text-3xl font-bold mb-8 text-center">Идеи для вдохновения</h2>
-      <div className="grid md:grid-cols-3 gap-8">
+    <section className="px-4 sm:px-6 md:px-10 lg:px-16 py-12 bg-white max-w-[calc(100vw-16rem)] mx-auto">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-10 text-center text-gray-900">
+        Идеи для вдохновения
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {inspirations.map((item, index) => (
           <div
             key={index}
@@ -36,10 +39,10 @@ const InspirationSection = () => {
             <img
               src={item.image}
               alt={item.title}
-              className="w-full h-64 object-cover"
+              className="w-full h-52 sm:h-56 md:h-64 lg:h-72 object-cover"
             />
             <div className="p-4">
-              <h3 className="text-xl font-semibold">{item.title}</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{item.title}</h3>
             </div>
           </div>
         ))}
