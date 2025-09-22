@@ -211,7 +211,7 @@ export const searchPins = createAsyncThunk(
   "pins/searchPins",
   async (query, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/posts/search/?q=${encodeURIComponent(query)}`);
+      const res = await api.get(`/search/posts/?q=${encodeURIComponent(query)}`);
       return res.data;
     } catch (err) {
       return rejectWithValue("Ошибка при поиске пинов");

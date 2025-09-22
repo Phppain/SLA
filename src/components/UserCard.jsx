@@ -1,11 +1,13 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toggleFollow } from "../features/users/userSlice";
+import { createChatRoom } from "../features/chat/chatSlice";
 import { FiUser, FiUserPlus, FiUserCheck, FiMessageCircle, FiHeart, FiUsers } from "react-icons/fi";
 
 const UserCard = ({ user }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.auth.user);
   const isSelf = currentUser?.id === user.id;
 
@@ -19,9 +21,24 @@ const UserCard = ({ user }) => {
     }
   };
 
-  const handleStartChat = () => {
-    // Здесь можно добавить логику для начала чата
-    console.log("Начать чат с", user.username);
+  const handleStartChat = async () => {
+    if (!currentUser) return;
+    
+    try {
+      console.log("Создаем чат с пользователем:", user);
+      console.log("Текущий пользователь:", currentUser);
+      
+      // Создаем чат-комнату с участниками: текущий пользователь и выбранный пользователь
+      const chatRoom = await dispatch(createChatRoom([currentUser.id, user.id])).unwrap();
+      console.log("Чат создан:", chatRoom);
+      
+      // Перенаправляем в чат
+      navigate('/chat');
+    } catch (error) {
+      console.error("Ошибка при создании чата:", error);
+      // Попробуем просто перейти в чат, если чат уже существует
+      navigate('/chat');
+    }
   };
 
   return (

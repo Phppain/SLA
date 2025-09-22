@@ -6,13 +6,14 @@ import {
   sendMessage, 
   createChatRoom,
   setCurrentRoom,
-  addMessage 
+  addMessage,
+  clearMessages 
 } from "../features/chat/chatSlice";
 import { FiSend, FiUsers, FiMessageCircle, FiArrowLeft } from "react-icons/fi";
 
 const Chat = () => {
   const dispatch = useDispatch();
-  const { chatRooms, currentRoom, messages, loading, websocket } = useSelector((state) => state.chat);
+  const { chatRooms, currentRoom, messages, loading } = useSelector((state) => state.chat);
   const user = useSelector((state) => state.auth.user);
   const [messageText, setMessageText] = useState("");
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -28,7 +29,17 @@ const Chat = () => {
 
   useEffect(() => {
     if (selectedRoom) {
-      dispatch(fetchMessages(selectedRoom.id));
+      console.log("🔍 Fetching messages for room:", selectedRoom.id);
+      dispatch(fetchMessages(selectedRoom.id)).then((result) => {
+        if (result.payload) {
+          console.log("📥 Received messages:", result.payload);
+          console.log("📥 Messages count:", result.payload.length);
+          if (result.payload.length > 0) {
+            console.log("📥 First message:", result.payload[0]);
+            console.log("📥 Message chat_rooms:", result.payload.map(m => m.chat_room));
+          }
+        }
+      });
     }
   }, [dispatch, selectedRoom]);
 
@@ -36,25 +47,67 @@ const Chat = () => {
     // Подключение к WebSocket
     if (user && selectedRoom) {
       const token = localStorage.getItem("accessToken");
-      const ws = new WebSocket(`ws://localhost:8000/ws/chat/${selectedRoom.id}/?token=${token}`);
+      
+      if (!token) {
+        console.error("No access token found");
+        return;
+      }
+
+      const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedRoom.id}/?token=${token}`;
+      console.log("Connecting to WebSocket:", wsUrl);
+      
+      const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
-        console.log("WebSocket connected");
+        console.log("✅ WebSocket connected to room", selectedRoom.id);
       };
 
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        dispatch(addMessage(data));
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📨 Received message:", data);
+          
+          if (data.type === 'message' && data.message) {
+            // Добавляем сообщение в стор только если оно из текущей комнаты
+            dispatch(addMessage({
+              id: data.message.id,
+              content: data.message.content,
+              sender: data.message.sender,
+              created_at: data.message.created_at,
+              chat_room: selectedRoom.id
+            }));
+          }
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
       };
 
-      ws.onclose = () => {
-        console.log("WebSocket disconnected");
+      ws.onerror = (error) => {
+        console.error("❌ WebSocket error:", error);
+      };
+
+      ws.onclose = (event) => {
+        console.log("🔌 WebSocket disconnected. Code:", event.code, "Reason:", event.reason);
+        
+        // Коды ошибок аутентификации
+        if (event.code === 4001) {
+          console.error("Authentication failed: No token provided");
+        } else if (event.code === 4002) {
+          console.error("Authentication failed: User not found");
+        } else if (event.code === 4003) {
+          console.error("Access denied: Not a participant of this chat");
+        } else if (event.code === 4004) {
+          console.error("Authentication failed: Invalid token");
+        }
       };
 
       wsRef.current = ws;
 
       return () => {
-        ws.close();
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+          console.log("Closing WebSocket connection");
+          ws.close();
+        }
       };
     }
   }, [user, selectedRoom, dispatch]);
@@ -64,15 +117,38 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (messageText.trim() && selectedRoom && wsRef.current) {
-      const messageData = {
-        message: messageText,
-        user_id: user.id
-      };
-      
-      wsRef.current.send(JSON.stringify(messageData));
-      setMessageText("");
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedRoom) return;
+
+    // Пробуем отправить через WebSocket
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        const messageData = {
+          message: messageText.trim()
+        };
+        
+        console.log("📤 Sending message via WebSocket:", messageData);
+        wsRef.current.send(JSON.stringify(messageData));
+        setMessageText("");
+      } catch (error) {
+        console.error("Error sending WebSocket message:", error);
+      }
+    } else {
+      // Fallback: отправляем через HTTP API если WebSocket не работает
+      console.log("📤 WebSocket not connected, using HTTP fallback");
+      try {
+        await dispatch(sendMessage({
+          roomId: selectedRoom.id,
+          content: messageText.trim()
+        }));
+        setMessageText("");
+        // Обновляем сообщения после отправки
+        setTimeout(() => {
+          dispatch(fetchMessages(selectedRoom.id));
+        }, 100);
+      } catch (error) {
+        console.error("Ошибка при отправке сообщения через HTTP:", error);
+      }
     }
   };
 
@@ -84,9 +160,13 @@ const Chat = () => {
   };
 
   const handleRoomSelect = (room) => {
+    console.log("🏠 Selecting room:", room);
+    // Очищаем сообщения при смене чата
+    dispatch(clearMessages());
+    // Устанавливаем текущую комнату в store
+    dispatch(setCurrentRoom(room));
     setSelectedRoom(room);
     setShowRooms(false);
-    dispatch(setCurrentRoom(room));
   };
 
   const formatTime = (dateString) => {
@@ -196,27 +276,35 @@ const Chat = () => {
 
             {/* Сообщения */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === user.id ? 'justify-end' : 'justify-start'}`}
-                >
+              {messages.map((message) => {
+                const isMyMessage = message.sender?.id === user.id;
+                return (
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.sender === user.id
-                        ? 'bg-pink-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
+                    key={message.id}
+                    className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      message.sender === user.id ? 'text-pink-100' : 'text-gray-500'
-                    }`}>
-                      {formatTime(message.created_at)}
-                    </p>
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        isMyMessage
+                          ? 'bg-pink-600 text-white'
+                          : 'bg-gray-100 text-gray-900'
+                      }`}
+                    >
+                      {!isMyMessage && (
+                        <p className="text-xs font-medium mb-1 text-gray-600">
+                          {message.sender?.username || 'Неизвестный'}
+                        </p>
+                      )}
+                      <p className="text-sm">{message.content}</p>
+                      <p className={`text-xs mt-1 ${
+                        isMyMessage ? 'text-pink-100' : 'text-gray-500'
+                      }`}>
+                        {formatTime(message.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
 

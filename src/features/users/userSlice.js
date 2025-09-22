@@ -26,7 +26,7 @@ export const searchUsers = createAsyncThunk(
   "users/searchUsers",
   async (query, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/users/search/?q=${encodeURIComponent(query)}`);
+      const res = await api.get(`/search/users/?q=${encodeURIComponent(query)}`);
       return res.data;
     } catch (err) {
       return rejectWithValue("Ошибка при поиске пользователей");

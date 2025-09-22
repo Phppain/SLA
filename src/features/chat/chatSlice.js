@@ -41,9 +41,13 @@ export const fetchMessages = createAsyncThunk(
   "chat/fetchMessages",
   async (roomId, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/chat-rooms/${roomId}/messages/`);
+      const url = `/messages/?chat_room=${roomId}`;
+      console.log("🌐 API Request URL:", url);
+      const res = await api.get(url);
+      console.log("🌐 API Response:", res.data);
       return res.data;
     } catch (err) {
+      console.error("🌐 API Error:", err);
       return rejectWithValue("Ошибка при получении сообщений");
     }
   }
@@ -54,7 +58,7 @@ export const sendMessage = createAsyncThunk(
   "chat/sendMessage",
   async ({ roomId, content }, { rejectWithValue }) => {
     try {
-      const res = await api.post(`/chat-rooms/${roomId}/messages/`, { content });
+      const res = await api.post(`/messages/`, { chat_room: roomId, content });
       return res.data;
     } catch (err) {
       return rejectWithValue("Ошибка при отправке сообщения");
@@ -73,7 +77,15 @@ const chatSlice = createSlice({
       state.currentRoom = action.payload;
     },
     addMessage: (state, action) => {
-      state.messages.push(action.payload);
+      // Добавляем сообщение только если оно из текущей комнаты
+      const message = action.payload;
+      if (state.currentRoom && message.chat_room === state.currentRoom.id) {
+        // Проверяем, что сообщение еще не добавлено (избегаем дубликатов)
+        const exists = state.messages.find(m => m.id === message.id);
+        if (!exists) {
+          state.messages.push(message);
+        }
+      }
     },
     clearMessages: (state) => {
       state.messages = [];

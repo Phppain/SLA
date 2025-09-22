@@ -27,7 +27,7 @@ export const markAsRead = createAsyncThunk(
   "notifications/markAsRead",
   async (notificationId, { rejectWithValue }) => {
     try {
-      await api.patch(`/notifications/${notificationId}/mark-read/`);
+      await api.patch(`/notifications/${notificationId}/`, { is_read: true });
       return notificationId;
     } catch (err) {
       return rejectWithValue("Ошибка при отметке уведомления");
@@ -40,7 +40,7 @@ export const markAllAsRead = createAsyncThunk(
   "notifications/markAllAsRead",
   async (_, { rejectWithValue }) => {
     try {
-      await api.post("/notifications/mark-all-read/");
+      await api.post("/mark-notifications-read/");
       return true;
     } catch (err) {
       return rejectWithValue("Ошибка при отметке всех уведомлений");
