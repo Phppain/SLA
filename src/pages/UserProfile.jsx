@@ -3,13 +3,15 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUsers, toggleFollow } from "../features/users/userSlice";
-import { fetchPins } from "../features/pins/pinSlice";
+import { fetchPins, fetchUserPins } from "../features/pins/pinSlice";
 import { openPinModal } from "../features/modal/modalSlice";
 import PinCard from "../components/PinCard";
 import Masonry from "react-masonry-css";
 import { FiUser, FiMapPin, FiGlobe, FiHeart, FiMessageCircle, FiUsers, FiUserPlus, FiUserCheck, FiMessageCircle as FiChat } from "react-icons/fi";
 
 const UserProfile = () => {
+  console.log("🔍 UserProfile component START");
+  
   const { username } = useParams();
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
@@ -18,16 +20,19 @@ const UserProfile = () => {
   
   const [activeTab, setActiveTab] = useState("pins"); // pins, saved, followers, following
   
+  console.log("🔍 UserProfile component loaded", { username, currentUser, users: users.length, pins: pins.length });
+  
   const user = users.find(u => u.username === username);
   const userPins = pins.filter((pin) => pin.author?.username === username);
   const isSelf = currentUser?.id === user?.id;
 
   useEffect(() => {
-    if (currentUser) {
-      dispatch(fetchUsers());
-      dispatch(fetchPins());
-    }
-  }, [dispatch, currentUser]);
+    console.log("🔍 UserProfile useEffect triggered", { currentUser, username });
+    console.log("🔍 Dispatching fetchUsers");
+    dispatch(fetchUsers());
+    console.log("🔍 Dispatching fetchPins");
+    dispatch(fetchPins());
+  }, [dispatch, username]);
 
   const handleToggleFollow = async () => {
     if (!currentUser || !user) return;

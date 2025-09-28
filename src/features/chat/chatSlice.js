@@ -66,6 +66,24 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
+// Отметить уведомления чата как прочитанные
+export const markChatNotificationsRead = createAsyncThunk(
+  "chat/markChatNotificationsRead",
+  async (chatRoomId, { rejectWithValue }) => {
+    try {
+      console.log("🔔 Marking chat notifications as read for room:", chatRoomId);
+      const res = await api.post("/mark-chat-notifications-read/", {
+        chat_room_id: chatRoomId
+      });
+      console.log("🔔 Chat notifications marked as read:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error marking chat notifications as read:", err);
+      return rejectWithValue("Ошибка при отметке уведомлений чата");
+    }
+  }
+);
+
 const chatSlice = createSlice({
   name: "chat",
   initialState,
@@ -136,6 +154,12 @@ const chatSlice = createSlice({
       // Отправка сообщения
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.messages.push(action.payload);
+      })
+      // Отметка уведомлений чата как прочитанных
+      .addCase(markChatNotificationsRead.fulfilled, (state, action) => {
+        console.log("Chat notifications marked as read:", action.payload);
+        // Принудительно обновляем список чатов
+        // Это заставит пересчитать unread_count
       });
   },
 });

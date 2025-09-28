@@ -39,6 +39,7 @@ export default function App() {
           <Route path="/pins" element={<PinsPage />} />
           <Route path="/search-users" element={<SearchUsers />} />
           <Route path="/user/:username" element={<UserProfile />} />
+          <Route path="/test-user" element={<div>TEST USER PROFILE</div>} />
           <Route path="/category/:name" element={<CategoryPage />} />
 
           {/* 🔒 Приватные маршруты */}

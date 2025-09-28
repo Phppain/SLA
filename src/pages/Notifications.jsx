@@ -2,9 +2,9 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   fetchNotifications, 
-  markNotificationsRead, 
-  markNotificationRead 
-} from "../features/notifications/notificationSlice";
+  markAllAsRead, 
+  markAsRead
+} from "../features/notifications/notificationsSlice";
 import { FiBell, FiHeart, FiMessageCircle, FiUserPlus, FiAtSign, FiCheck } from "react-icons/fi";
 
 const Notifications = () => {
@@ -19,11 +19,11 @@ const Notifications = () => {
   }, [dispatch, user]);
 
   const handleMarkAllRead = () => {
-    dispatch(markNotificationsRead());
+    dispatch(markAllAsRead());
   };
 
   const handleMarkRead = (notificationId) => {
-    dispatch(markNotificationRead(notificationId));
+    dispatch(markAsRead(notificationId));
   };
 
   const getNotificationIcon = (type) => {

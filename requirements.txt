@@ -9,3 +9,11 @@ postcss
 autoprefixer
 react-masonry-css
 vite
+axios
+framer-motion
+aos
+react-slick
+slick-carousel
+swiper
+uuid
+@vitejs/plugin-react

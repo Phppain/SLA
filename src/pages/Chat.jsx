@@ -7,8 +7,10 @@ import {
   createChatRoom,
   setCurrentRoom,
   addMessage,
-  clearMessages 
+  clearMessages,
+  markChatNotificationsRead
 } from "../features/chat/chatSlice";
+import { markChatNotificationsRead as markChatNotificationsReadGlobal, fetchNotifications } from "../features/notifications/notificationsSlice";
 import { FiSend, FiUsers, FiMessageCircle, FiArrowLeft } from "react-icons/fi";
 
 const Chat = () => {
@@ -26,6 +28,17 @@ const Chat = () => {
       dispatch(fetchChatRooms());
     }
   }, [dispatch, user]);
+
+  // Обновляем список чатов при смене выбранной комнаты
+  useEffect(() => {
+    if (selectedRoom) {
+      // Небольшая задержка чтобы дать время API обновиться
+      const timer = setTimeout(() => {
+        dispatch(fetchChatRooms());
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedRoom, dispatch]);
 
   useEffect(() => {
     if (selectedRoom) {
@@ -159,7 +172,7 @@ const Chat = () => {
     }
   };
 
-  const handleRoomSelect = (room) => {
+  const handleRoomSelect = async (room) => {
     console.log("🏠 Selecting room:", room);
     // Очищаем сообщения при смене чата
     dispatch(clearMessages());
@@ -167,6 +180,29 @@ const Chat = () => {
     dispatch(setCurrentRoom(room));
     setSelectedRoom(room);
     setShowRooms(false);
+    
+    // Отмечаем уведомления этого чата как прочитанные
+    try {
+      console.log("🔔 Attempting to mark notifications as read for chat:", room.id);
+      const result = await dispatch(markChatNotificationsRead(room.id)).unwrap();
+      console.log("🔔 Backend result:", result);
+      
+      // Обновляем локальное состояние уведомлений
+      dispatch(markChatNotificationsReadGlobal(room.id));
+      
+      // Принудительно обновляем список чатов и уведомлений
+      await dispatch(fetchChatRooms()).unwrap();
+      await dispatch(fetchNotifications()).unwrap();
+      
+      // Дополнительно обновляем уведомления через небольшой таймаут
+      setTimeout(() => {
+        dispatch(fetchNotifications());
+      }, 100);
+      
+      console.log("✅ Chat notifications marked as read and rooms refreshed");
+    } catch (error) {
+      console.error("❌ Error marking notifications as read:", error);
+    }
   };
 
   const formatTime = (dateString) => {
@@ -275,29 +311,42 @@ const Chat = () => {
             </div>
 
             {/* Сообщения */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4">
               {messages.map((message) => {
-                const isMyMessage = message.sender?.id === user.id;
+                // Получаем ID из localStorage если user не определен
+                const senderId = message.sender?.id;
+                let userId = user?.id;
+                
+                if (!userId) {
+                  // Пробуем получить ID из токена
+                  const token = localStorage.getItem('accessToken');
+                  if (token) {
+                    try {
+                      const payload = JSON.parse(atob(token.split('.')[1]));
+                      userId = payload.user_id;
+                    } catch (e) {
+                      console.error('Error parsing token:', e);
+                    }
+                  }
+                }
+                
+                const isMyMessage = senderId === userId;
+                
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} mb-2`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      className={`max-w-[70%] px-3 py-2 rounded-2xl ${
                         isMyMessage
-                          ? 'bg-pink-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
+                          ? 'bg-blue-500 text-white rounded-br-md'
+                          : 'bg-gray-200 text-gray-900 rounded-bl-md'
                       }`}
                     >
-                      {!isMyMessage && (
-                        <p className="text-xs font-medium mb-1 text-gray-600">
-                          {message.sender?.username || 'Неизвестный'}
-                        </p>
-                      )}
                       <p className="text-sm">{message.content}</p>
                       <p className={`text-xs mt-1 ${
-                        isMyMessage ? 'text-pink-100' : 'text-gray-500'
+                        isMyMessage ? 'text-blue-100' : 'text-gray-500'
                       }`}>
                         {formatTime(message.created_at)}
                       </p>

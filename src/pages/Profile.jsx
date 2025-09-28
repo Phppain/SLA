@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
-import { logout, updateProfile } from "../features/auth/authSlice";
-import { fetchPins, fetchSavedPins } from "../features/pins/pinSlice";
+import { logout, updateProfile, fetchUserData } from "../features/auth/authSlice";
+import { fetchPins, fetchSavedPins, fetchUserPins } from "../features/pins/pinSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { FiTrash, FiUser, FiUserX, FiEdit, FiSave, FiX, FiHeart, FiMessageCircle, FiBookmark, FiGrid, FiPlus, FiBookmark as FiSaved } from "react-icons/fi";
 import { useState, useEffect } from "react";
@@ -26,11 +26,38 @@ export default function Profile() {
 
   const userPins = pins.filter((pin) => pin.author?.id === user?.id);
   const userCreatedPins = userPins.filter((pin) => !pin.is_saved);
+  
+  console.log("🔍 Profile debug:", {
+    user: user?.username,
+    userId: user?.id,
+    userObject: user,
+    pins: pins.length,
+    userPins: userPins.length,
+    userCreatedPins: userCreatedPins.length,
+    allPins: pins.map(p => ({ id: p.id, author: p.author?.username, title: p.title }))
+  });
 
   useEffect(() => {
-    if (user) {
-      dispatch(fetchPins());
+    const token = localStorage.getItem('accessToken');
+    console.log("🔍 Profile: Checking user and token:", {
+      user,
+      token: token ? 'exists' : 'missing',
+      hasToken: !!token,
+      userKeys: user ? Object.keys(user) : 'no user',
+      userObject: user
+    });
+    
+    if (user && user.id) {
+      console.log("🔍 Profile: Fetching user pins for:", user.id, user.username);
+      dispatch(fetchUserPins(user.id));
       dispatch(fetchSavedPins());
+    } else {
+      console.log("🔍 Profile: User not loaded or no ID:", user);
+      // Попробуем загрузить пользователя заново
+      if (token) {
+        console.log("🔍 Profile: Token exists, trying to fetch user data");
+        dispatch(fetchUserData());
+      }
     }
   }, [dispatch, user]);
 

@@ -36,6 +36,7 @@ const Topbar = ({ toggleSidebar }) => {
         <SearchInput query={query} setQuery={(e) => handleChange(e)} />
       </div>
 
+
       {/* Профиль пользователя */}
       {user ? (
         <Link

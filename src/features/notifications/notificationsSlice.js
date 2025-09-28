@@ -69,13 +69,34 @@ const notificationsSlice = createSlice({
       state.error = null;
     },
     addNotification: (state, action) => {
-      state.notifications.unshift(action.payload);
-      if (!action.payload.is_read) {
-        state.unreadCount += 1;
+      // Проверяем, что уведомление еще не существует
+      const existingNotification = state.notifications.find(n => n.id === action.payload.id);
+      if (!existingNotification) {
+        state.notifications.unshift(action.payload);
+        if (!action.payload.is_read) {
+          state.unreadCount += 1;
+        }
       }
     },
     updateUnreadCount: (state, action) => {
       state.unreadCount = action.payload;
+    },
+    markChatNotificationsRead: (state, action) => {
+      // Отмечаем уведомления чата как прочитанные
+      const chatRoomId = action.payload;
+      let updatedCount = 0;
+      state.notifications.forEach(notification => {
+        if (notification.notification_type === 'message' && 
+            notification.message && 
+            notification.message.chat_room === chatRoomId &&
+            !notification.is_read) {
+          notification.is_read = true;
+          updatedCount++;
+        }
+      });
+      // Уменьшаем счетчик
+      state.unreadCount = Math.max(0, state.unreadCount - updatedCount);
+      console.log(`🔔 Marked ${updatedCount} notifications as read for chat ${chatRoomId}`);
     },
   },
   extraReducers: (builder) => {
@@ -120,5 +141,5 @@ const notificationsSlice = createSlice({
   },
 });
 
-export const { clearError, addNotification, updateUnreadCount } = notificationsSlice.actions;
+export const { clearError, addNotification, updateUnreadCount, markChatNotificationsRead } = notificationsSlice.actions;
 export default notificationsSlice.reducer;

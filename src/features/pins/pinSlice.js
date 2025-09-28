@@ -128,6 +128,22 @@ export const fetchPins = createAsyncThunk(
   }
 );
 
+// Получение пинов пользователя
+export const fetchUserPins = createAsyncThunk(
+  "pins/fetchUserPins",
+  async (userId, { rejectWithValue }) => {
+    try {
+      console.log("🔍 Fetching user pins for user ID:", userId);
+      const res = await api.get(`/posts/?author=${userId}`);
+      console.log("🔍 User pins response:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error fetching user pins:", err);
+      return rejectWithValue("Ошибка при получении пинов пользователя");
+    }
+  }
+);
+
 // Создание пина
 export const createPin = createAsyncThunk(
   "pins/createPin",
@@ -242,6 +258,19 @@ const pinSlice = createSlice({
         state.pins = action.payload;
       })
       .addCase(fetchPins.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Получение пинов пользователя
+      .addCase(fetchUserPins.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserPins.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pins = action.payload;
+      })
+      .addCase(fetchUserPins.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
